@@ -127,7 +127,6 @@ app/
 ├── rl/                    # Contextual bandit logic
 knowledge_base/            # Knowledge base documents used for RAG
 scripts/                   # Demo and utility scripts
-docs/                      # Architecture and implementation notes
 ui/                        # React frontend
 ```
 
