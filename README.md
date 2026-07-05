@@ -22,9 +22,6 @@ POST /feedback {transaction_id, score} ──► reward = score·10 − latency
                                        ──► Q(s,a) += (reward − Q(s,a)) / N(s,a)
 ```
 
-Full architecture, diagrams, and per-slice study notes live in [docs/](docs/) —
-start with [docs/00-architecture.md](docs/00-architecture.md).
-
 ## Setup
 
 Prerequisites: Python 3.12+ and [Ollama](https://ollama.com/download).
