@@ -6,10 +6,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.agent.graph import run_agent
-from app.pipeline import SUPPORTED_MODELS
 from app.rl.bandit import Arm, bandit, classify_query
 from app.schemas import FeedbackRequest, FeedbackResponse, QueryRequest, QueryResponse
-from app.shared.constants import CORS_ORIGINS
+from app.shared.constants import CORS_ORIGINS, SUPPORTED_MODELS
 
 app = FastAPI(
     title="SmartOps Support Agent",
