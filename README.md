@@ -23,6 +23,9 @@ User → Frontend → API /query → Query classifier
                                   ↓
                            Feedback / reward update
 ```
+<img width="1903" height="909" alt="image" src="https://github.com/user-attachments/assets/09a12500-0404-4de2-889f-715636af3f3a" />
+
+
 
 ## Core capabilities
 
