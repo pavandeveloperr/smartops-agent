@@ -5,11 +5,8 @@ from dataclasses import dataclass
 
 from langchain_ollama import ChatOllama
 
-from app.rag.retriever import format_context, retrieve
-
-SUPPORTED_MODELS = ("llama3.2:3b", "qwen2.5:3b")
-DEFAULT_MODEL = SUPPORTED_MODELS[0]
-DEFAULT_TOP_K = 3
+from app.rag.retriever import RetrievedChunk, format_context, retrieve
+from app.shared.constants import DEFAULT_MODEL, DEFAULT_TOP_K
 
 SYSTEM_PROMPT = """\
 You are the SmartOps support agent. Answer the user's question using ONLY the
@@ -25,6 +22,17 @@ Documentation excerpts:
 """
 
 _llm_cache: dict[str, ChatOllama] = {}
+
+
+def _build_prompt(chunks: list[RetrievedChunk], query: str) -> list[tuple[str, str]]:
+    return [
+        ("system", SYSTEM_PROMPT.format(context=format_context(chunks))),
+        ("human", query),
+    ]
+
+
+def _collect_sources(chunks: list[RetrievedChunk]) -> list[str]:
+    return list(dict.fromkeys(f"{c.source} § {c.section}" for c in chunks))
 
 
 def _get_llm(model: str) -> ChatOllama:
@@ -49,17 +57,12 @@ def answer_query(query: str, model: str = DEFAULT_MODEL, top_k: int = DEFAULT_TO
 
     chunks = retrieve(query, top_k=top_k)
     llm = _get_llm(model)
-    response = llm.invoke(
-        [
-            ("system", SYSTEM_PROMPT.format(context=format_context(chunks))),
-            ("human", query),
-        ]
-    )
+    response = llm.invoke(_build_prompt(chunks, query))
 
     return PipelineResult(
         answer=response.content,
         llm_used=model,
         top_k=top_k,
         latency_seconds=round(time.perf_counter() - started, 3),
-        sources=list(dict.fromkeys(f"{c.source} § {c.section}" for c in chunks)),
+        sources=_collect_sources(chunks),
     )
