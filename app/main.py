@@ -9,6 +9,7 @@ from app.agent.graph import run_agent
 from app.pipeline import SUPPORTED_MODELS
 from app.rl.bandit import Arm, bandit, classify_query
 from app.schemas import FeedbackRequest, FeedbackResponse, QueryRequest, QueryResponse
+from app.shared.constants import CORS_ORIGINS
 
 app = FastAPI(
     title="SmartOps Support Agent",
@@ -18,7 +19,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=list(CORS_ORIGINS),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,34 +32,44 @@ def health_check() -> dict:
     return {"status": "ok", "service": "smartops-agent"}
 
 
-TRANSACTIONS: dict[str, dict] = {}
+TRANSACTIONS: dict[str, dict[str, object]] = {}
+
+
+def _resolve_arm(query: str, requested_model: str | None, requested_top_k: int | None) -> tuple[str, Arm, str]:
+    state = classify_query(query)
+
+    if requested_model or requested_top_k:
+        if requested_model and requested_model not in SUPPORTED_MODELS:
+            raise HTTPException(422, f"Unknown model {requested_model!r}. Supported: {list(SUPPORTED_MODELS)}")
+        arm = Arm(model=requested_model or SUPPORTED_MODELS[0], top_k=requested_top_k or 3)
+        return state, arm, "manual"
+
+    arm, mode = bandit.select(state)
+    return state, arm, mode
+
+
+def _store_transaction(state: str, arm: Arm, mode: str, latency_seconds: float) -> str:
+    txn_id = str(uuid.uuid4())
+    TRANSACTIONS[txn_id] = {
+        "state": state,
+        "arm_key": arm.key,
+        "mode": mode,
+        "latency_seconds": latency_seconds,
+    }
+    return txn_id
 
 
 @app.post("/query", response_model=QueryResponse)
 def query(request: QueryRequest) -> QueryResponse:
     """Answer a support question using the selected bandit arm and agent."""
-    state = classify_query(request.query)
-
-    if request.model or request.top_k:
-        if request.model and request.model not in SUPPORTED_MODELS:
-            raise HTTPException(422, f"Unknown model {request.model!r}. Supported: {list(SUPPORTED_MODELS)}")
-        arm = Arm(model=request.model or SUPPORTED_MODELS[0], top_k=request.top_k or 3)
-        mode = "manual"
-    else:
-        arm, mode = bandit.select(state)
+    state, arm, mode = _resolve_arm(request.query, request.model, request.top_k)
 
     try:
         result = run_agent(request.query, model=arm.model, top_k=arm.top_k)
     except ConnectionError as exc:
         raise HTTPException(503, f"LLM backend unreachable — is Ollama running? ({exc})")
 
-    txn_id = str(uuid.uuid4())
-    TRANSACTIONS[txn_id] = {
-        "state": state,
-        "arm_key": arm.key,
-        "mode": mode,
-        "latency_seconds": result.latency_seconds,
-    }
+    txn_id = _store_transaction(state, arm, mode, result.latency_seconds)
 
     return QueryResponse(
         answer=result.answer,
@@ -76,10 +87,10 @@ def feedback(request: FeedbackRequest) -> FeedbackResponse:
     if txn is None:
         raise HTTPException(404, "Unknown or already-scored transaction_id.")
 
-    reward = request.score * 10 - txn["latency_seconds"]
+    reward = request.score * 10 - float(txn["latency_seconds"])
 
     if txn["mode"] != "manual":
-        bandit.update(txn["state"], txn["arm_key"], reward)
+        bandit.update(str(txn["state"]), str(txn["arm_key"]), reward)
 
     return FeedbackResponse(transaction_id=request.transaction_id, reward=round(reward, 3))
 

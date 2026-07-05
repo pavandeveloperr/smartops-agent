@@ -6,7 +6,8 @@ from langgraph.prebuilt import create_react_agent
 
 from app.agent.tools import ALL_TOOLS
 from app.pipeline import PipelineResult, _get_llm
-from app.rag.retriever import format_context, retrieve
+from app.rag.retriever import RetrievedChunk, format_context, retrieve
+from app.shared.constants import MAX_AGENT_STEPS
 
 AGENT_SYSTEM_PROMPT = """\
 You are the SmartOps technical support agent.
@@ -27,7 +28,16 @@ Documentation excerpts:
 {context}
 """
 
-MAX_AGENT_STEPS = 6
+
+def _build_system_prompt(chunks: list[RetrievedChunk]) -> str:
+    return AGENT_SYSTEM_PROMPT.format(context=format_context(chunks))
+
+
+def _collect_sources(chunks: list[RetrievedChunk], tools_used: list[str]) -> list[str]:
+    sources = list(dict.fromkeys(f"{c.source} § {c.section}" for c in chunks))
+    if tools_used:
+        sources += [f"tool: {name}" for name in tools_used]
+    return sources
 
 
 def run_agent(query: str, model: str, top_k: int) -> PipelineResult:
@@ -35,7 +45,7 @@ def run_agent(query: str, model: str, top_k: int) -> PipelineResult:
     started = time.perf_counter()
 
     chunks = retrieve(query, top_k=top_k)
-    system_prompt = AGENT_SYSTEM_PROMPT.format(context=format_context(chunks))
+    system_prompt = _build_system_prompt(chunks)
 
     agent = create_react_agent(_get_llm(model), tools=ALL_TOOLS, prompt=system_prompt)
 
@@ -44,15 +54,10 @@ def run_agent(query: str, model: str, top_k: int) -> PipelineResult:
         {"recursion_limit": 2 * MAX_AGENT_STEPS},
     )
 
-    answer = final_state["messages"][-1].content
-
-    tools_used = list(dict.fromkeys(
-        m.name for m in final_state["messages"] if m.type == "tool"
-    ))
-
-    sources = list(dict.fromkeys(f"{c.source} § {c.section}" for c in chunks))
-    if tools_used:
-        sources += [f"tool: {name}" for name in tools_used]
+    messages = final_state["messages"]
+    answer = messages[-1].content
+    tools_used = list(dict.fromkeys(message.name for message in messages if message.type == "tool"))
+    sources = _collect_sources(chunks, tools_used)
 
     return PipelineResult(
         answer=answer,
