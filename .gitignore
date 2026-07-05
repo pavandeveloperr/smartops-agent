@@ -1,0 +1,17 @@
+# Python virtual environment (like node_modules — never commit it)
+venv/
+__pycache__/
+*.pyc
+
+# ChromaDB persistent storage (generated at runtime, like a local DB file)
+.chroma/
+
+# RL bandit state (learned at runtime)
+bandit_state.json
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+
+docs/

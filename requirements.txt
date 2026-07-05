@@ -1,0 +1,25 @@
+# ============================================================
+# SmartOps Support Agent — dependencies
+# Node.js analogy: this is your package.json "dependencies" block.
+# Install with:  pip install -r requirements.txt   (like `npm install`)
+#
+# We add dependencies SLICE BY SLICE so you always know why each
+# package exists. Commented lines are coming in later slices.
+# ============================================================
+
+# --- Slice 0: API skeleton ---
+fastapi            # Web framework (Express equivalent) — routing, validation, auto Swagger docs
+uvicorn[standard]  # ASGI server that runs the app (the `node` process equivalent); [standard] adds auto-reload
+
+# --- Slice 1: RAG ---
+chromadb           # Vector database — stores document chunks as embeddings, does similarity search
+langchain-text-splitters  # Smart document chunking (split on headings/paragraphs, with overlap)
+
+# --- Slice 2: LLMs ---
+langchain-ollama   # LangChain bindings for Ollama (local open-source LLMs)
+
+# --- Slice 3: Agent ---
+langgraph          # State-machine agent framework (the ReAct loop) — same mental model as your MediQuery graph
+
+# --- Slice 4: RL ---
+# (no new deps — the epsilon-greedy bandit is pure Python + a JSON file for persistence)
