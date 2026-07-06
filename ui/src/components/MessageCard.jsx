@@ -1,59 +1,99 @@
+import "../styles/MessageCard.css";
+
 function MessageCard({ message, feedbackMap, onFeedback }) {
-  const isFeedbackPending = feedbackMap[message.id] === 'submitting'
-  const isFeedbackUp = feedbackMap[message.id] === 'up'
-  const isFeedbackDown = feedbackMap[message.id] === 'down'
+  const isUser = message.type === "user";
+
+  const isFeedbackPending = feedbackMap[message.id] === "submitting";
+  const isFeedbackUp = feedbackMap[message.id] === "up";
+  const isFeedbackDown = feedbackMap[message.id] === "down";
 
   return (
-    <div className={`message-card ${message.type}`}>
-      <div className="message-meta">
-        <strong>{message.type === 'user' ? 'You' : 'Agent'}</strong>
-        {message.type === 'assistant' && (
-          <span>
-            {message.llmUsed} · k={message.sources?.length ? 'auto' : 'n/a'} · {message.latencySeconds?.toFixed(2)}s
-          </span>
+    <div className={`message-row ${isUser ? "user" : "assistant"}`}>
+      <div className={`message-bubble ${isUser ? "user" : "assistant"}`}>
+        <div className="message-meta">
+          <div className="message-author">
+            <span className="avatar">
+              {isUser ? "👤" : "🤖"}
+            </span>
+
+            <strong>
+              {isUser ? "You" : "Agent"}
+            </strong>
+
+            {!isUser && (
+              <span className="message-model">
+                {message.llmUsed} • {message.latencySeconds?.toFixed(2)}s
+              </span>
+            )}
+          </div>
+        </div>
+
+        {isUser ? (
+          <p>{message.content}</p>
+        ) : (
+          <>
+            <div className="message-content">
+              {message.answer}
+            </div>
+
+            {message.sources?.length > 0 && (
+              <div className="source-list">
+                {message.sources.map((source) => (
+                  <span key={source} className="chip">
+                    {source}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="feedback-row">
+              <button
+                className="feedback-button"
+                disabled={
+                  isFeedbackPending ||
+                  isFeedbackUp ||
+                  isFeedbackDown
+                }
+                onClick={() => onFeedback(message.id, 1)}
+              >
+                👍
+              </button>
+
+              <button
+                className="feedback-button"
+                disabled={
+                  isFeedbackPending ||
+                  isFeedbackUp ||
+                  isFeedbackDown
+                }
+                onClick={() => onFeedback(message.id, 0)}
+              >
+                👎
+              </button>
+
+              {isFeedbackPending && (
+                <span className="feedback-state">
+                  Saving...
+                </span>
+              )}
+
+              {isFeedbackUp && (
+                <span className="feedback-state positive">
+                  Thanks!
+                </span>
+              )}
+
+              {isFeedbackDown && (
+                <span className="feedback-state negative">
+                  Feedback recorded
+                </span>
+              )}
+            </div>
+          </>
         )}
       </div>
-      {message.type === 'user' ? (
-        <p>{message.content}</p>
-      ) : (
-        <>
-          <p>{message.answer}</p>
-          {message.sources?.length > 0 && (
-            <div className="source-list">
-              <span className="label">Sources</span>
-              {message.sources.map((source) => (
-                <span key={source} className="chip">
-                  {source}
-                </span>
-              ))}
-            </div>
-          )}
-          <div className="feedback-row">
-            <span className="label">Was this useful?</span>
-            <button
-              type="button"
-              className="feedback-button"
-              onClick={() => onFeedback(message.id, 1)}
-              disabled={isFeedbackPending || isFeedbackUp || isFeedbackDown}
-            >
-              👍 Yes
-            </button>
-            <button
-              type="button"
-              className="feedback-button"
-              onClick={() => onFeedback(message.id, 0)}
-              disabled={isFeedbackPending || isFeedbackUp || isFeedbackDown}
-            >
-              👎 No
-            </button>
-            {isFeedbackPending && <span className="feedback-state">Saving…</span>}
-            {isFeedbackUp && <span className="feedback-state positive">Thanks for the thumbs up.</span>}
-            {isFeedbackDown && <span className="feedback-state negative">Feedback recorded.</span>}
-          </div>
-        </>
-      )}
     </div>
-  )
+  );
 }
 
-export default MessageCard
+export default MessageCard;

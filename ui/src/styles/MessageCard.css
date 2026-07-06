@@ -1,0 +1,206 @@
+/* ==========================================
+   Chat Row
+========================================== */
+
+.message-row {
+  display: flex;
+  width: 100%;
+}
+
+.message-row.user {
+  justify-content: flex-end;
+}
+
+.message-row.assistant {
+  justify-content: flex-start;
+}
+
+/* ==========================================
+   Bubble
+========================================== */
+
+.message-bubble {
+  max-width: 78%;
+
+  border-radius: 18px;
+
+  padding: 16px 18px;
+
+  animation: fadeIn .25s ease;
+}
+
+.message-bubble.user {
+  background: #2563eb;
+  color: white;
+
+  border-bottom-right-radius: 6px;
+}
+
+.message-bubble.assistant {
+  background: white;
+
+  border: 1px solid #e5e7eb;
+
+  border-bottom-left-radius: 6px;
+
+  box-shadow: 0 4px 14px rgba(0,0,0,.05);
+}
+
+/* ==========================================
+   Meta
+========================================== */
+
+.message-meta {
+  margin-bottom: 12px;
+}
+
+.message-author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #eff6ff;
+
+  font-size: 15px;
+
+  flex-shrink: 0;
+}
+
+.message-model {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.message-bubble.user .avatar {
+  background: rgba(255,255,255,.2);
+}
+
+.message-bubble.user .message-model {
+  color: rgba(255,255,255,.8);
+}
+
+.message-bubble.user .message-meta {
+  color: rgba(255,255,255,.85);
+}
+
+/* ==========================================
+   Message
+========================================== */
+
+.message-content,
+.message-bubble p {
+  margin: 0;
+
+  line-height: 1.7;
+
+  white-space: pre-wrap;
+
+  word-break: break-word;
+}
+
+/* ==========================================
+   Sources
+========================================== */
+
+.source-list {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 8px;
+
+  margin-top: 16px;
+}
+
+.chip {
+  padding: 5px 10px;
+
+  border-radius: 999px;
+
+  background: #eff6ff;
+
+  color: #2563eb;
+
+  font-size: .78rem;
+}
+
+/* ==========================================
+   Feedback
+========================================== */
+
+.feedback-row {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin-top: 18px;
+}
+
+.feedback-button {
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  border: 1px solid #d1d5db;
+
+  background: white;
+
+  cursor: pointer;
+
+  transition: .2s;
+}
+
+.feedback-button:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.feedback-button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.feedback-state {
+  font-size: .82rem;
+
+  color: #64748b;
+}
+
+.feedback-state.positive {
+  color: #16a34a;
+}
+
+.feedback-state.negative {
+  color: #dc2626;
+}
+
+/* ==========================================
+   Animation
+========================================== */
+
+@keyframes fadeIn {
+
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+}

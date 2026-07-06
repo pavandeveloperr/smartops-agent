@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from "react";
 import './App.css'
 import { askSupport, fetchBanditSnapshot, fetchHealth, submitFeedback } from './api'
 import BanditMonitor from './components/BanditMonitor'
@@ -19,6 +19,15 @@ function App() {
   const [modelOverride, setModelOverride] = useState('auto')
   const [topKOverride, setTopKOverride] = useState('auto')
   const [feedbackMap, setFeedbackMap] = useState({})
+  const transcriptRef = useRef(null);
+
+
+  useEffect(() => {
+    transcriptRef.current?.scrollTo({
+      top: transcriptRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages, isLoading]);
 
   const loadBanditSnapshot = async () => {
     try {
@@ -107,62 +116,61 @@ function App() {
       <header className="app-header">
         <div>
           <p className="eyebrow">SmartOps technical support</p>
-          <h1>Self-optimizing support agent</h1>
-          <p className="subtle-text">
-            Ask a question, inspect the routed answer, and score it so the bandit learns which model and retrieval depth work best.
-          </p>
-        </div>
-        <div className="health-card">
-          <span className={`status-dot ${healthStatus}`} />
-          <strong>{healthStatus === 'online' ? 'Backend online' : 'Backend offline'}</strong>
-          <span>API: {import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}</span>
         </div>
       </header>
 
       <main className="content-grid">
         <section className="chat-panel">
-          <SupportComposer
-            query={query}
-            setQuery={setQuery}
-            onSubmit={handleSubmit}
-            isLoading={isLoading}
-            advancedOpen={advancedOpen}
-            setAdvancedOpen={setAdvancedOpen}
-            modelOverride={modelOverride}
-            setModelOverride={setModelOverride}
-            topKOverride={topKOverride}
-            setTopKOverride={setTopKOverride}
-          />
+          <div className="chat-messages" ref={transcriptRef}>
+            {error && <div className="error-banner">{error}</div>}
 
-          {error && <div className="error-banner">{error}</div>}
-
-          <div className="transcript">
-            {messages.length === 0 && !isLoading && (
-              <div className="empty-state">
-                <p>Use the composer to ask the agent a support question.</p>
-                <p className="hint">The answer card includes feedback controls so the RL loop can learn from every interaction.</p>
-              </div>
-            )}
-
-            {messages.map((message, index) => (
-              <MessageCard
-                key={`${message.type}-${index}`}
-                message={message}
-                feedbackMap={feedbackMap}
-                onFeedback={handleFeedback}
-              />
-            ))}
-
-            {isLoading && (
-              <div className="message-card assistant pending">
-                <div className="message-meta">
-                  <strong>Agent</strong>
-                  <span>Thinking…</span>
+            <div className="transcript">
+              {messages.length === 0 && !isLoading && (
+                <div className="empty-state">
+                  <p>Use the composer to ask the agent a support question.</p>
+                  <p className="hint">
+                    The answer card includes feedback controls so the RL loop can
+                    learn from every interaction.
+                  </p>
                 </div>
-                <div className="skeleton" />
-                <div className="skeleton short" />
-              </div>
-            )}
+              )}
+
+              {messages.map((message, index) => (
+                <MessageCard
+                  key={`${message.type}-${index}`}
+                  message={message}
+                  feedbackMap={feedbackMap}
+                  onFeedback={handleFeedback}
+                />
+              ))}
+
+              {isLoading && (
+                <div className="message-card assistant pending">
+                  <div className="message-meta">
+                    <strong>🤖 Agent</strong>
+                    <span>Thinking…</span>
+                  </div>
+
+                  <div className="skeleton" />
+                  <div className="skeleton short" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="chat-composer">
+            <SupportComposer
+              query={query}
+              setQuery={setQuery}
+              onSubmit={handleSubmit}
+              isLoading={isLoading}
+              advancedOpen={advancedOpen}
+              setAdvancedOpen={setAdvancedOpen}
+              modelOverride={modelOverride}
+              setModelOverride={setModelOverride}
+              topKOverride={topKOverride}
+              setTopKOverride={setTopKOverride}
+            />
           </div>
         </section>
 
