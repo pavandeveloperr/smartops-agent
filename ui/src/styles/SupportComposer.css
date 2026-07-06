@@ -1,0 +1,207 @@
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ========================= */
+
+.composer-shell {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+
+  background: white;
+
+  border: 1px solid #dbe2ea;
+  border-radius: 22px;
+
+  padding: 14px;
+
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+
+  transition: all 0.2s ease;
+}
+
+.composer-shell:focus-within {
+  border-color: #3b82f6;
+
+  box-shadow:
+    0 0 0 4px rgba(59, 130, 246, 0.08),
+    0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+/* ========================= */
+
+.composer textarea {
+  flex: 1;
+
+  border: none;
+
+  resize: none;
+
+  outline: none;
+
+  background: transparent;
+
+  font-size: 15px;
+
+  line-height: 1.6;
+
+  max-height: 220px;
+
+  overflow-y: auto;
+
+  font-family: inherit;
+}
+
+.composer textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* ========================= */
+
+.send-button {
+  width: 42px;
+
+  height: 42px;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background: #2563eb;
+
+  color: white;
+
+  cursor: pointer;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-size: 18px;
+
+  transition: .2s;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #1d4ed8;
+
+  transform: translateY(-1px);
+}
+
+.send-button:disabled {
+  background: #cbd5e1;
+
+  cursor: not-allowed;
+}
+
+/* ========================= */
+
+.loader {
+  width: 18px;
+  height: 18px;
+
+  border-radius: 50%;
+
+  border: 2px solid rgba(255,255,255,.35);
+
+  border-top-color: white;
+
+  animation: spin .7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========================= */
+
+.composer-footer {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 12px;
+}
+
+.advanced-toggle {
+  width: fit-content;
+
+  border: none;
+
+  background: #f8fafc;
+
+  color: #475569;
+
+  padding: 8px 14px;
+
+  border-radius: 999px;
+
+  cursor: pointer;
+
+  transition: .2s;
+}
+
+.advanced-toggle:hover {
+  background: #eef2ff;
+}
+
+/* ========================= */
+
+.advanced-controls {
+  display: flex;
+
+  gap: 20px;
+
+  flex-wrap: wrap;
+
+  padding: 14px;
+
+  background: #f8fafc;
+
+  border-radius: 16px;
+
+  border: 1px solid #e5e7eb;
+}
+
+.advanced-controls label {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 6px;
+
+  font-size: 13px;
+
+  color: #64748b;
+}
+
+.advanced-controls select {
+  min-width: 180px;
+
+  padding: 10px 12px;
+
+  border-radius: 10px;
+
+  border: 1px solid #dbe2ea;
+
+  background: white;
+
+  font: inherit;
+}
+
+@media (max-width: 700px) {
+  .advanced-controls {
+    flex-direction: column;
+  }
+
+  .advanced-controls select {
+    width: 100%;
+  }
+}
