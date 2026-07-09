@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from langchain_ollama import ChatOllama
 
+from app.config import OLLAMA_BASE_URL
 from app.rag.retriever import RetrievedChunk, format_context, retrieve
 from app.shared.constants import DEFAULT_MODEL, DEFAULT_TOP_K
 
@@ -21,10 +22,12 @@ Documentation excerpts:
 {context}
 """
 
+# Cache to prevent rebuilding the LangChain LLM object on every request
 _llm_cache: dict[str, ChatOllama] = {}
 
 
 def _build_prompt(chunks: list[RetrievedChunk], query: str) -> list[tuple[str, str]]:
+    """Format the system instructions and user query for the LLM."""
     return [
         ("system", SYSTEM_PROMPT.format(context=format_context(chunks))),
         ("human", query),
@@ -32,12 +35,21 @@ def _build_prompt(chunks: list[RetrievedChunk], query: str) -> list[tuple[str, s
 
 
 def _collect_sources(chunks: list[RetrievedChunk]) -> list[str]:
+    """Extract and deduplicate unique document sources."""
     return list(dict.fromkeys(f"{c.source} § {c.section}" for c in chunks))
 
 
 def _get_llm(model: str) -> ChatOllama:
+    """
+    Factory function to initialize and cache the LLM connection.
+    Used by both the simple pipeline and the ReAct graph agent.
+    """
     if model not in _llm_cache:
-        _llm_cache[model] = ChatOllama(model=model, temperature=0.2)
+        _llm_cache[model] = ChatOllama(
+            model=model,
+            base_url=OLLAMA_BASE_URL,
+            temperature=0.0
+        )
     return _llm_cache[model]
 
 
@@ -49,20 +61,26 @@ class PipelineResult:
     top_k: int
     latency_seconds: float
     sources: list[str]
+    is_cached: bool
 
 
 def answer_query(query: str, model: str = DEFAULT_MODEL, top_k: int = DEFAULT_TOP_K) -> PipelineResult:
-    """Run retrieve → generate and time the whole request."""
+    """Run retrieve → generate and time the whole request (Simple RAG Path)."""
     started = time.perf_counter()
-
+    
     chunks = retrieve(query, top_k=top_k)
     llm = _get_llm(model)
+    
     response = llm.invoke(_build_prompt(chunks, query))
-
+    
+    final_answer = response.content
+    sources = _collect_sources(chunks)
+    
     return PipelineResult(
-        answer=response.content,
+        answer=final_answer,
         llm_used=model,
         top_k=top_k,
         latency_seconds=round(time.perf_counter() - started, 3),
-        sources=_collect_sources(chunks),
+        sources=sources,
+        is_cached=False 
     )

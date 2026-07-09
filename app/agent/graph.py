@@ -12,17 +12,16 @@ from app.shared.constants import MAX_AGENT_STEPS
 AGENT_SYSTEM_PROMPT = """\
 You are the SmartOps technical support agent.
 
-You have two sources of truth:
-1. The documentation excerpts below — use them for how-to, setup, configuration,
-   and error-code questions.
-2. Tools (check_server_status, restart_service) — use them ONLY when the user asks
-   about the CURRENT state of a service (is it down/slow right now?) or requests a
-   restart. Never call a tool for questions the documentation already answers.
-
 Rules:
 - Be concise and actionable: steps, commands, config snippets over prose.
 - If neither the docs nor the tools can answer, say so plainly. Never invent
   SmartOps features, services, or status information.
+- Tools (check_server_status, restart_service) are ONLY for checking the CURRENT 
+  live state of a service or requesting a restart.
+
+CRITICAL INSTRUCTION: If the user asks about an ERROR CODE (e.g., E-101) or a general 
+setup/how-to question, you MUST NOT use any tools. You must read the documentation 
+excerpts below and answer directly from the text.
 
 Documentation excerpts:
 {context}
@@ -65,4 +64,5 @@ def run_agent(query: str, model: str, top_k: int) -> PipelineResult:
         top_k=top_k,
         latency_seconds=round(time.perf_counter() - started, 3),
         sources=sources,
+        is_cached=False
     )
