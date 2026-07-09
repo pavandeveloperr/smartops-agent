@@ -20,6 +20,10 @@ class QueryResponse(BaseModel):
         default_factory=list,
         description="Knowledge-base sections the answer was grounded in.",
     )
+    is_cached: bool = Field(
+        default=False, 
+        description="True if the response was served instantly from the semantic cache."
+    )
 
 
 class FeedbackRequest(BaseModel):
