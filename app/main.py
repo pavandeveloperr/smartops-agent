@@ -1,5 +1,6 @@
 """SmartOps Support Agent API."""
 
+import time
 import uuid
 
 from fastapi import FastAPI, HTTPException
@@ -9,6 +10,7 @@ from app.agent.graph import run_agent
 from app.rl.bandit import Arm, bandit, classify_query
 from app.schemas import FeedbackRequest, FeedbackResponse, QueryRequest, QueryResponse
 from app.shared.constants import CORS_ORIGINS, SUPPORTED_MODELS
+from app.shared.cache import check_cache, save_to_cache
 
 app = FastAPI(
     title="SmartOps Support Agent",
@@ -61,12 +63,29 @@ def _store_transaction(state: str, arm: Arm, mode: str, latency_seconds: float) 
 @app.post("/query", response_model=QueryResponse)
 def query(request: QueryRequest) -> QueryResponse:
     """Answer a support question using the selected bandit arm and agent."""
+    started = time.perf_counter()
     state, arm, mode = _resolve_arm(request.query, request.model, request.top_k)
 
+    cached_answer, cached_sources = check_cache(request.query)
+    
+    if cached_answer:
+        latency = round(time.perf_counter() - started, 3)
+        txn_id = _store_transaction(state, arm, mode, latency)
+        
+        return QueryResponse(
+            answer=cached_answer,
+            llm_used="chromadb_cache",
+            latency_seconds=latency,
+            transaction_id=txn_id,
+            sources=cached_sources,
+        )
+        
     try:
         result = run_agent(request.query, model=arm.model, top_k=arm.top_k)
     except ConnectionError as exc:
         raise HTTPException(503, f"LLM backend unreachable — is Ollama running? ({exc})")
+
+    save_to_cache(request.query, result.answer, result.sources)
 
     txn_id = _store_transaction(state, arm, mode, result.latency_seconds)
 
