@@ -6,7 +6,7 @@ import MessageCard from './components/MessageCard'
 import SupportComposer from './components/SupportComposer'
 import { buildBanditRows } from './utils'
 
-const ARM_LABELS = ['llama3.2:3b|k=2', 'llama3.2:3b|k=5', 'qwen2.5:3b|k=2', 'qwen2.5:3b|k=5']
+const ARM_LABELS = ['llama3.2:3b|k=1', 'llama3.2:3b|k=3', 'qwen2.5:3b|k=1', 'qwen2.5:3b|k=3']
 
 function App() {
   const [query, setQuery] = useState('How do I fix error E-101?')
